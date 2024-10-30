@@ -2,7 +2,7 @@ name: AutoGPT Platform - Build, Push, and Deploy Dev Environment
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ aarushikansal/fix-dev-ci ]
     paths:
       - 'autogpt_platform/backend/**'
       - 'autogpt_platform/frontend/**'
@@ -93,9 +93,9 @@ jobs:
       id: check_changes
       run: |
         git fetch origin dev
-        BACKEND_CHANGED=$(git diff --name-only origin/dev HEAD | grep "^autogpt_platform/backend/" && echo "true" || echo "false")
-        FRONTEND_CHANGED=$(git diff --name-only origin/dev HEAD | grep "^autogpt_platform/frontend/" && echo "true" || echo "false")
-        MARKET_CHANGED=$(git diff --name-only origin/dev HEAD | grep "^autogpt_platform/market/" && echo "true" || echo "false")
+        BACKEND_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -q "^autogpt_platform/backend/" && echo "true" || echo "false")
+        FRONTEND_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -q "^autogpt_platform/frontend/" && echo "true" || echo "false")
+        MARKET_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -q "^autogpt_platform/market/" && echo "true" || echo "false")
         echo "backend_changed=$BACKEND_CHANGED" >> $GITHUB_OUTPUT
         echo "frontend_changed=$FRONTEND_CHANGED" >> $GITHUB_OUTPUT
         echo "market_changed=$MARKET_CHANGED" >> $GITHUB_OUTPUT
@@ -123,6 +123,7 @@ jobs:
       with:
         context: .
         file: ./autogpt_platform/frontend/Dockerfile
+        target: dev
         push: true
         tags: us-east1-docker.pkg.dev/agpt-dev/agpt-frontend-dev/agpt-frontend-dev:${{ github.sha }}
         cache-from: type=local,src=/tmp/.buildx-cache
