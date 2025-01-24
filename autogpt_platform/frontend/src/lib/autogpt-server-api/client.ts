@@ -32,6 +32,7 @@ import {
   APIKeyPermission,
   CreateAPIKeyResponse,
   APIKey,
+  FileMeta,
 } from "./types";
 import { createBrowserClient } from "@supabase/ssr";
 import getServerSupabase from "../supabase/getServerSupabase";
@@ -80,6 +81,8 @@ export default class BackendAPI {
     return this._request("POST", "/auth/user", {});
   }
 
+  /* ---------------- CREDIT ---------------- */
+
   getUserCredit(page?: string): Promise<{ credits: number }> {
     try {
       return this._get(`/credits`, undefined, page);
@@ -99,6 +102,8 @@ export default class BackendAPI {
   fulfillCheckout(): Promise<void> {
     return this._request("PATCH", "/credits");
   }
+
+  /* ---------------- GRAPHS ---------------- */
 
   getBlocks(): Promise<Block[]> {
     return this._get("/blocks");
@@ -177,6 +182,8 @@ export default class BackendAPI {
       await this._request("POST", `/graphs/${graphID}/executions/${runID}/stop`)
     ).map(parseNodeExecutionResultTimestamps);
   }
+
+  /* ---------------- CREDENTIALS ---------------- */
 
   oAuthLogin(
     provider: string,
@@ -265,6 +272,27 @@ export default class BackendAPI {
       permissions,
     });
   }
+
+  /* ---------------- FILES ---------------- */
+
+  listFiles(): Promise<FileMeta[]> {
+    return this._get("/files");
+  }
+
+  getFileMeta(fileID: string): Promise<FileMeta> {
+    return this._get(`/files/${fileID}`);
+  }
+
+  downloadFile(fileID: string): Promise<unknown> {
+    // FIXME: find out how to do file download
+    return this._get(`/files/${fileID}/download`);
+  }
+
+  async uploadFile(file: File): Promise<File> {
+    return (await this._uploadFile("/files", file)).json();
+  }
+
+  /* ---------------- WEBHOOKS ---------------- */
 
   /**
    * @returns `true` if a ping event was received, `false` if provider doesn't support pinging but the webhook exists.
@@ -361,10 +389,8 @@ export default class BackendAPI {
     return this._request("DELETE", `/store/submissions/${submission_id}`);
   }
 
-  uploadStoreSubmissionMedia(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
-    return this._uploadFile("/store/submissions/media", file);
+  async uploadStoreSubmissionMedia(file: File): Promise<string> {
+    return (await this._uploadFile("/store/submissions/media", file)).text();
   }
 
   updateStoreProfile(profile: ProfileDetails): Promise<ProfileDetails> {
@@ -436,7 +462,7 @@ export default class BackendAPI {
     return this._get(`/schedules`);
   }
 
-  private async _uploadFile(path: string, file: File): Promise<string> {
+  private async _uploadFile(path: string, file: File): Promise<Response> {
     // Get session with retry logic
     let token = "no-token-found";
     let retryCount = 0;
@@ -477,8 +503,7 @@ export default class BackendAPI {
     }
 
     // Parse the response appropriately
-    const media_url = await response.text();
-    return media_url;
+    return response;
   }
 
   private async _request(

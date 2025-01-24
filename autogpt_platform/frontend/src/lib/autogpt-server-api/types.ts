@@ -135,12 +135,17 @@ export type CredentialsProviderName =
   (typeof PROVIDER_NAMES)[keyof typeof PROVIDER_NAMES];
 
 export type BlockIOCredentialsSubSchema = BlockIOSubSchemaMeta & {
-  /* Mirror of backend/data/model.py:CredentialsFieldSchemaExtra */
+  /* Mirror of backend/data/model.py:_CredentialsFieldSchemaExtra */
   credentials_provider: CredentialsProviderName[];
   credentials_scopes?: string[];
   credentials_types: Array<CredentialsType>;
   discriminator?: string;
   discriminator_mapping?: { [key: string]: CredentialsProviderName };
+};
+
+export type BlockIOFileSubSchema = BlockIOSubSchemaMeta & {
+  /* Mirror of backend/data/_fileio.py:_FileIOFieldSchemaExtra */
+  content_types: string[];
 };
 
 export type BlockIONullSubSchema = BlockIOSubSchemaMeta & {
@@ -321,6 +326,23 @@ export type APIKeyCredentials = BaseCredentials & {
   title: string;
   api_key: string;
   expires_at?: number;
+};
+
+/* Mirror of backend/data/files.py:File */
+export type FileMeta = {
+  id: string;
+  user_id: string;
+  name: string;
+  size: number; // file size in bytes
+  content_type: string; // MIME content type of the file
+  created_at: Date;
+};
+
+/* Mirror of backend/backend/data/_fileio.py:FileMetaIO */
+export type FileMetaIO = {
+  id: string;
+  name: string;
+  content_type: string;
 };
 
 /* Mirror of backend/data/integrations.py:Webhook */
